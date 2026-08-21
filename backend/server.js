@@ -113,10 +113,26 @@ app.post('/api/files/download/:fileId', async (req, res) => {
       return res.status(404).json({ error: 'File missing from server.' });
     }
 
-    file.downloadCount += 1;
-    await file.save();
+    // Send file to browser and delete immediately once transfer completes
+        res.download(filePath, file.originalName, async (err) => {
+            if (err) {
+                console.error('Download error:', err.message);
+                return;
+            }
 
-    res.download(filePath, file.originalName);
+            try {
+                // 1. Delete physical file from uploads folder
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+
+                // 2. Delete database entry so the link instantly expires
+                await FileTransfer.deleteOne({ _id: file._id });
+                console.log(`Successfully purged file ${file.originalName} (${fileId})`);
+            } catch (cleanupErr) {
+                console.error('Error during cleanup:', cleanupErr.message);
+            }
+        });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
