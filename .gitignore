@@ -1,0 +1,25 @@
+# Node dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+backend/.env
+
+# Uploaded user files
+backend/uploads/
+uploads/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Editor directories
+.vscode/
+.idea/
+.DS_Store
