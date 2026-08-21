@@ -12,7 +12,7 @@ export default function DownloadPage() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/files/${fileId}`)
+    axios.get(`https://swiftshare-backend-ouxx.onrender.com/api/files/${fileId}`)
       .then(res => {
         setFileInfo(res.data);
         setLoading(false);
@@ -30,7 +30,7 @@ export default function DownloadPage() {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/files/download/${fileId}`,
+        `https://swiftshare-backend-ouxx.onrender.com/api/files/download/${fileId}`,
         { password },
         { responseType: 'blob' }
       );
