@@ -1,5 +1,6 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -13,6 +14,7 @@ require('dotenv').config();
 const FileTransfer = require('./models/FileTransfer');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -21,7 +23,6 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
-
 // Multer storage engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
