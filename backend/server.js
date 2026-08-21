@@ -62,7 +62,7 @@ app.post('/api/files/upload', upload.single('file'), async (req, res) => {
     res.json({
       success: true,
       fileId,
-      shareableLink: `http://localhost:5173/download/${fileId}`
+     shareableLink: `${process.env.CLIENT_URL || 'https://swift-share-roan.vercel.app'}/download/${fileId}`
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
