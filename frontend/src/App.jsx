@@ -52,6 +52,21 @@ export default function App() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'SwiftShare Secure File',
+          text: 'Here is your secure single-use download link:',
+          url: shareableLink,
+        });
+      } catch (err) {
+        console.log('Share dismissed:', err);
+      }
+    } else {
+      copyToClipboard();
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: 'sans-serif' }}>
@@ -74,6 +89,79 @@ export default function App() {
                 <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
+            {/* Quick Share Buttons */}
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        {/* Device Native Share */}
+        <button
+          type="button"
+          onClick={handleNativeShare}
+          style={{
+            padding: '8px 12px',
+            background: '#6366f1',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}
+        >
+          Share to Device
+        </button>
+
+        {/* WhatsApp */}
+        <a
+          href={`https://api.whatsapp.com/send?text=${encodeURIComponent('Here is your secure download link: ' + shareableLink)}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            padding: '8px 12px',
+            background: '#25D366',
+            color: '#fff',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            fontSize: '12px',
+            fontWeight: '600',
+            display: 'inline-block'
+          }}
+        >
+          WhatsApp
+        </a>
+
+        {/* Email */}
+        <a
+          href={`mailto:?subject=SwiftShare File Download&body=${encodeURIComponent('Here is your secure download link: ' + shareableLink)}`}
+          style={{
+            padding: '8px 12px',
+            background: '#ea4335',
+            color: '#fff',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            fontSize: '12px',
+            fontWeight: '600',
+            display: 'inline-block'
+          }}
+        >
+          Email
+        </a>
+
+        {/* SMS */}
+        <a
+          href={`sms:?body=${encodeURIComponent('SwiftShare single-use link: ' + shareableLink)}`}
+          style={{
+            padding: '8px 12px',
+            background: '#0284c7',
+            color: '#fff',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            fontSize: '12px',
+            fontWeight: '600',
+            display: 'inline-block'
+          }}
+        >
+          SMS
+        </a>
+      </div>
             <button onClick={() => { setShareableLink(''); setFile(null); }} style={{ marginTop: '20px', background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
               Send Another File
             </button>
