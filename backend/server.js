@@ -10,7 +10,7 @@ const fs = require('fs');
 const { nanoid } = require('nanoid');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-
+const nodemailer = require('nodemailer');
 const FileTransfer = require('./models/FileTransfer');
 
 const app = express();
@@ -141,7 +141,7 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,
+  port: 2525,
   auth: {
     user: process.env.BREVO_USER,
     pass: process.env.BREVO_KEY,
