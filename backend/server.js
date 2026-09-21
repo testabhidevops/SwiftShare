@@ -137,7 +137,49 @@ app.post('/api/files/download/:fileId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  auth: {
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_KEY,
+  },
+});
+
+app.post('/api/files/send-email', async (req, res) => {
+  const { recipientEmail, shareableLink } = req.body;
+
+  if (!recipientEmail || !shareableLink) {
+    return res.status(400).json({ error: 'Recipient email and link are required.' });
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"SwiftShare" <${process.env.SENDER_EMAIL}>`,
+      to: recipientEmail,
+      subject: 'SwiftShare - Your Secure Single-Use File Link',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+          <h2 style="color: #6366f1;">You received a file via SwiftShare</h2>
+          <p>Click below to download your file. This single-use link automatically expires upon download.</p>
+          <div style="margin: 24px 0;">
+            <a href="${shareableLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Download File
+            </a>
+          </div>
+          <p style="font-size: 12px; color: #64748b;">Or paste this link into your browser:<br/>${shareableLink}</p>
+        </div>
+      `,
+    });
+
+    res.json({ success: true, message: 'Email sent successfully!' });
+  } catch (error) {
+    console.error('Brevo Mail Error:', error);
+    res.status(500).json({ error: 'Failed to deliver email. Check server configuration.' });
+  }
+});
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {

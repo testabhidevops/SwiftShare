@@ -11,6 +11,9 @@ export default function App() {
   const [shareableLink, setShareableLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('');
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -47,25 +50,33 @@ export default function App() {
     }
   };
 
+  const handleSendDirectEmail = async (e) => {
+    e.preventDefault();
+    if (!recipientEmail) return;
+
+    setEmailSending(true);
+    setEmailStatus('');
+
+    try {
+      const res = await axios.post('https://swiftshare-backend-ouxx.onrender.com/api/files/send-email', {
+        recipientEmail,
+        shareableLink,
+      });
+      if (res.data.success) {
+        setEmailStatus('Email sent successfully!');
+        setRecipientEmail('');
+      }
+    } catch (err) {
+      setEmailStatus(err.response?.data?.error || 'Failed to send email.');
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'SwiftShare Secure File',
-          text: 'Here is your secure single-use download link:',
-          url: shareableLink,
-        });
-      } catch (err) {
-        console.log('Share dismissed:', err);
-      }
-    } else {
-      copyToClipboard();
-    }
   };
 
   return (
@@ -78,6 +89,8 @@ export default function App() {
           <div style={{ textAlign: 'center' }}>
             <CheckCircle2 size={48} color="#22c55e" style={{ margin: '0 auto 16px' }} />
             <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>File Ready to Share!</h2>
+            
+            {/* Copy Link Bar */}
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px', background: '#0f172a', padding: '8px', borderRadius: '8px', alignItems: 'center' }}>
               <input 
                 type="text" 
@@ -89,79 +102,50 @@ export default function App() {
                 <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
-            {/* Quick Share Buttons */}
-      <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        {/* Device Native Share */}
-        <button
-          type="button"
-          onClick={handleNativeShare}
-          style={{
-            padding: '8px 12px',
-            background: '#6366f1',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: '600'
-          }}
-        >
-          Share to Device
-        </button>
 
-        {/* WhatsApp */}
-        <a
-          href={`https://api.whatsapp.com/send?text=${encodeURIComponent('Here is your secure download link: ' + shareableLink)}`}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            padding: '8px 12px',
-            background: '#25D366',
-            color: '#fff',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontSize: '12px',
-            fontWeight: '600',
-            display: 'inline-block'
-          }}
-        >
-          WhatsApp
-        </a>
+            {/* Direct Send via Email Form */}
+            <form onSubmit={handleSendDirectEmail} style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="email"
+                  placeholder="Enter recipient's email"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  required
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid #4a5568',
+                    background: '#0f172a',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={emailSending}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#6366f1',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: emailSending ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {emailSending ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+              {emailStatus && (
+                <p style={{ fontSize: '12px', color: emailStatus.includes('successfully') ? '#22c55e' : '#ef4444', margin: '4px 0 0 0' }}>
+                  {emailStatus}
+                </p>
+              )}
+            </form>
 
-        {/* Email */}
-        <a
-          href={`mailto:?subject=SwiftShare File Download&body=${encodeURIComponent('Here is your secure download link: ' + shareableLink)}`}
-          style={{
-            padding: '8px 12px',
-            background: '#ea4335',
-            color: '#fff',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontSize: '12px',
-            fontWeight: '600',
-            display: 'inline-block'
-          }}
-        >
-          Email
-        </a>
-
-        {/* SMS */}
-        <a
-          href={`sms:?body=${encodeURIComponent('SwiftShare single-use link: ' + shareableLink)}`}
-          style={{
-            padding: '8px 12px',
-            background: '#0284c7',
-            color: '#fff',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontSize: '12px',
-            fontWeight: '600',
-            display: 'inline-block'
-          }}
-        >
-          SMS
-        </a>
-      </div>
             <button onClick={() => { setShareableLink(''); setFile(null); }} style={{ marginTop: '20px', background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
               Send Another File
             </button>
