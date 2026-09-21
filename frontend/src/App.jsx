@@ -495,15 +495,54 @@ export default function App() {
                     </div>
 
                     {emailStatus && (
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: emailStatus.includes('successfully') ? '#4ade80' : '#f87171',
-                        margin: '2px 0 0 2px'
-                      }}>
-                        {emailStatus}
-                      </p>
-                    )}
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    marginTop: '6px',
+    background: emailStatus.includes('successfully') 
+      ? 'linear-gradient(90deg, rgba(34, 197, 94, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%)' 
+      : 'rgba(239, 68, 68, 0.15)',
+    border: emailStatus.includes('successfully') 
+      ? '1px solid #22c55e' 
+      : '1px solid rgba(239, 68, 68, 0.4)',
+    boxShadow: emailStatus.includes('successfully') 
+      ? '0 0 16px rgba(34, 197, 94, 0.25)' 
+      : 'none',
+  }}>
+    <div style={{
+      width: '24px',
+      height: '24px',
+      borderRadius: '50%',
+      backgroundColor: emailStatus.includes('successfully') ? '#22c55e' : '#ef4444',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: emailStatus.includes('successfully') ? '0 0 8px #22c55e' : 'none'
+    }}>
+      <Check size={15} color="#070b14" strokeWidth={3} />
+    </div>
+
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <span style={{
+        fontSize: '13px',
+        fontWeight: '700',
+        color: emailStatus.includes('successfully') ? '#4ade80' : '#fca5a5',
+        letterSpacing: '-0.01em'
+      }}>
+        {emailStatus}
+      </span>
+      {emailStatus.includes('successfully') && (
+        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+          Recipient can now download via the single-use link in their inbox.
+        </span>
+      )}
+    </div>
+  </div>
+)}
                   </form>
                 </div>
 
