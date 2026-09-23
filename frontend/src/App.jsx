@@ -17,7 +17,8 @@ import {
   MailCheck,
   Flame,
   Layers,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
   const [expiryHours, setExpiryHours] = useState('24');
   const [maxDownloads, setMaxDownloads] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [shareableLink, setShareableLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
@@ -59,6 +61,14 @@ export default function App() {
     }
   };
 
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 B';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(1) + ' KB';
+    }
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) {
@@ -67,6 +77,7 @@ export default function App() {
     }
 
     setUploading(true);
+    setUploadProgress(0);
     setError('');
 
     const formData = new FormData();
@@ -77,7 +88,13 @@ export default function App() {
 
     try {
       const response = await axios.post('https://swiftshare-backend-ouxx.onrender.com/api/files/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        },
       });
       setShareableLink(response.data.shareableLink);
     } catch (err) {
@@ -123,6 +140,7 @@ export default function App() {
     setError('');
     setEmailStatus('');
     setRecipientEmail('');
+    setUploadProgress(0);
   };
 
   return (
@@ -142,15 +160,13 @@ export default function App() {
       overflowX: 'hidden'
     }}>
 
-      {/* Ambient Grid Layer */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`,
-        backgroundSize: '48px 48px',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+      {/* Animated stripes style for live progress bar */}
+      <style>{`
+        @keyframes limeStripes {
+          from { background-position: 40px 0; }
+          to { background-position: 0 0; }
+        }
+      `}</style>
 
       {/* Top Application Navbar */}
       <header style={{
@@ -356,7 +372,105 @@ export default function App() {
               background: 'linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent)'
             }} />
 
-            {shareableLink ? (
+            {uploading ? (
+              /* ================= LIVE UPLOADING STATE (LIMEWIRE STYLE) ================= */
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px',
+                padding: '20px 8px'
+              }}>
+                {/* File Row with Metadata and Striped Progress Bar */}
+                <div style={{
+                  background: 'rgba(7, 11, 20, 0.7)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{
+                    flex: '1 1 180px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    overflow: 'hidden'
+                  }}>
+                    <FileText size={20} color="#38bdf8" style={{ flexShrink: 0 }} />
+                    <span style={{
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: '#f8fafc',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {file ? file.name : 'Payload'}
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                    {file ? formatFileSize(file.size) : ''}
+                  </span>
+
+                  {/* Lime-green striped progress bar */}
+                  <div style={{
+                    flex: '1 1 220px',
+                    height: '24px',
+                    backgroundColor: '#1a2e1a',
+                    border: '1.5px solid #22c55e',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: '0 0 12px rgba(34, 197, 94, 0.35)'
+                  }}>
+                    <div style={{
+                      width: `${uploadProgress}%`,
+                      height: '100%',
+                      backgroundImage: 'linear-gradient(45deg, #10b981 25%, #84cc16 25%, #84cc16 50%, #10b981 50%, #10b981 75%, #84cc16 75%, #84cc16 100%)',
+                      backgroundSize: '28px 28px',
+                      animation: 'limeStripes 0.8s linear infinite',
+                      transition: 'width 0.2s ease-out'
+                    }} />
+                    <span style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      color: '#070b14',
+                      textShadow: '0 0 4px rgba(255, 255, 255, 0.8)'
+                    }}>
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status Message and Spinner */}
+                <div style={{
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '24px 0'
+                }}>
+                  <Loader2 size={36} color="#38bdf8" className="animate-spin" />
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#f8fafc', margin: '0 0 4px 0' }}>
+                      {uploadProgress === 100 ? "Finalizing Encryption & Token..." : "You're almost done!"}
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
+                      {uploadProgress === 100 ? "Writing metadata to secure database..." : "Uploading your files to encrypted memory..."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : shareableLink ? (
               /* ================= SUCCESS STATE ================= */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
                 <div style={{
@@ -494,55 +608,55 @@ export default function App() {
                       </button>
                     </div>
 
+                    {/* High-visibility glowing alert card */}
                     {emailStatus && (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '12px 16px',
-    borderRadius: '12px',
-    marginTop: '6px',
-    background: emailStatus.includes('successfully') 
-      ? 'linear-gradient(90deg, rgba(34, 197, 94, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%)' 
-      : 'rgba(239, 68, 68, 0.15)',
-    border: emailStatus.includes('successfully') 
-      ? '1px solid #22c55e' 
-      : '1px solid rgba(239, 68, 68, 0.4)',
-    boxShadow: emailStatus.includes('successfully') 
-      ? '0 0 16px rgba(34, 197, 94, 0.25)' 
-      : 'none',
-  }}>
-    <div style={{
-      width: '24px',
-      height: '24px',
-      borderRadius: '50%',
-      backgroundColor: emailStatus.includes('successfully') ? '#22c55e' : '#ef4444',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-      boxShadow: emailStatus.includes('successfully') ? '0 0 8px #22c55e' : 'none'
-    }}>
-      <Check size={15} color="#070b14" strokeWidth={3} />
-    </div>
-
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <span style={{
-        fontSize: '13px',
-        fontWeight: '700',
-        color: emailStatus.includes('successfully') ? '#4ade80' : '#fca5a5',
-        letterSpacing: '-0.01em'
-      }}>
-        {emailStatus}
-      </span>
-      {emailStatus.includes('successfully') && (
-        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-          Recipient can now download via the single-use link in their inbox.
-        </span>
-      )}
-    </div>
-  </div>
-)}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        marginTop: '6px',
+                        background: emailStatus.includes('successfully') 
+                          ? 'linear-gradient(90deg, rgba(34, 197, 94, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%)' 
+                          : 'rgba(239, 68, 68, 0.15)',
+                        border: emailStatus.includes('successfully') 
+                          ? '1px solid #22c55e' 
+                          : '1px solid rgba(239, 68, 68, 0.4)',
+                        boxShadow: emailStatus.includes('successfully') 
+                          ? '0 0 16px rgba(34, 197, 94, 0.25)' 
+                          : 'none',
+                      }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: emailStatus.includes('successfully') ? '#22c55e' : '#ef4444',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxShadow: emailStatus.includes('successfully') ? '0 0 8px #22c55e' : 'none'
+                        }}>
+                          <Check size={15} color="#070b14" strokeWidth={3} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            color: emailStatus.includes('successfully') ? '#4ade80' : '#fca5a5',
+                            letterSpacing: '-0.01em'
+                          }}>
+                            {emailStatus}
+                          </span>
+                          {emailStatus.includes('successfully') && (
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                              Recipient can now download via the single-use link in their inbox.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </form>
                 </div>
 
@@ -570,7 +684,7 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              /* ================= UPLOAD STATE ================= */
+              /* ================= UPLOAD FORM STATE ================= */
               <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
                 {/* Drag and Drop Zone */}
@@ -609,7 +723,7 @@ export default function App() {
                         {file.name}
                       </p>
                       <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: '600' }}>
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready for staging
+                        {formatFileSize(file.size)} • Ready for staging
                       </span>
                     </div>
                   ) : (
@@ -713,17 +827,8 @@ export default function App() {
                     opacity: uploading ? 0.75 : 1
                   }}
                 >
-                  {uploading ? (
-                    <>
-                      <RefreshCw size={16} className="animate-spin" />
-                      <span>Encrypting & Staging Link...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={16} />
-                      <span>Generate Transfer Link</span>
-                    </>
-                  )}
+                  <Zap size={16} />
+                  <span>Generate Transfer Link</span>
                 </button>
               </form>
             )}
