@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { 
   UploadCloud, 
@@ -9,16 +9,16 @@ import {
   Send, 
   ShieldCheck, 
   FileText, 
-  Sparkles,
-  RefreshCw,
-  Zap,
-  HardDrive,
-  KeyRound,
-  MailCheck,
-  Flame,
-  Layers,
-  Check,
-  Loader2
+  Sparkles, 
+  RefreshCw, 
+  Zap, 
+  HardDrive, 
+  KeyRound, 
+  MailCheck, 
+  Flame, 
+  Layers, 
+  Check, 
+  Loader2 
 } from 'lucide-react';
 
 export default function App() {
@@ -35,6 +35,7 @@ export default function App() {
   const [emailSending, setEmailSending] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const progressIntervalRef = useRef(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -77,8 +78,18 @@ export default function App() {
     }
 
     setUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(12);
     setError('');
+
+    // Smooth progress increment so small files show a realistic visible progress animation
+    progressIntervalRef.current = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev < 88) {
+          return prev + Math.floor(Math.random() * 8 + 3);
+        }
+        return prev;
+      });
+    }, 120);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -91,15 +102,24 @@ export default function App() {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percentCompleted);
+            const actualPercent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress((prev) => Math.max(prev, Math.min(actualPercent, 95)));
           }
         },
       });
-      setShareableLink(response.data.shareableLink);
+
+      clearInterval(progressIntervalRef.current);
+      setUploadProgress(100);
+
+      // Brief delay at 100% so the user visually sees completion
+      setTimeout(() => {
+        setShareableLink(response.data.shareableLink);
+        setUploading(false);
+      }, 400);
+
     } catch (err) {
+      clearInterval(progressIntervalRef.current);
       setError(err.response?.data?.error || 'Failed to upload file. Please try again.');
-    } finally {
       setUploading(false);
     }
   };
@@ -134,6 +154,7 @@ export default function App() {
   };
 
   const resetForm = () => {
+    clearInterval(progressIntervalRef.current);
     setShareableLink('');
     setFile(null);
     setPassword('');
@@ -141,6 +162,7 @@ export default function App() {
     setEmailStatus('');
     setRecipientEmail('');
     setUploadProgress(0);
+    setUploading(false);
   };
 
   return (
@@ -148,9 +170,9 @@ export default function App() {
       minHeight: '100vh',
       backgroundColor: '#070b14',
       backgroundImage: `
-        radial-gradient(at 10% 10%, rgba(14, 165, 233, 0.15) 0px, transparent 40%),
-        radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.16) 0px, transparent 45%),
-        radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.6) 0px, transparent 80%)
+        radial-gradient(at 10% 10%, rgba(14, 165, 233, 0.18) 0px, transparent 40%),
+        radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.20) 0px, transparent 45%),
+        radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.7) 0px, transparent 80%)
       `,
       color: '#f8fafc',
       display: 'flex',
@@ -160,13 +182,35 @@ export default function App() {
       overflowX: 'hidden'
     }}>
 
-      {/* Animated stripes style for live progress bar */}
+      {/* Embedded Animation Styles */}
       <style>{`
         @keyframes limeStripes {
           from { background-position: 40px 0; }
           to { background-position: 0 0; }
         }
+        @keyframes spinAround {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .custom-spinner {
+          animation: spinAround 1s linear infinite !important;
+        }
       `}</style>
+
+      {/* Prominent Technical Grid Background Lines */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `
+          linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px)
+        `,
+        backgroundSize: '40px 40px',
+        maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, #000 70%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, #000 70%, transparent 100%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
 
       {/* Top Application Navbar */}
       <header style={{
@@ -352,7 +396,7 @@ export default function App() {
         {/* RIGHT COLUMN: The Interactive Console (Upload & Result) */}
         <section>
           <div style={{
-            background: 'rgba(15, 23, 42, 0.8)',
+            background: 'rgba(15, 23, 42, 0.85)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -373,14 +417,13 @@ export default function App() {
             }} />
 
             {uploading ? (
-              /* ================= LIVE UPLOADING STATE (LIMEWIRE STYLE) ================= */
+              /* ================= LIVE UPLOADING STATE ================= */
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '24px',
                 padding: '20px 8px'
               }}>
-                {/* File Row with Metadata and Striped Progress Bar */}
                 <div style={{
                   background: 'rgba(7, 11, 20, 0.7)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -415,7 +458,7 @@ export default function App() {
                     {file ? formatFileSize(file.size) : ''}
                   </span>
 
-                  {/* Lime-green striped progress bar */}
+                  {/* Striped barber-pole bar */}
                   <div style={{
                     flex: '1 1 220px',
                     height: '24px',
@@ -432,7 +475,7 @@ export default function App() {
                       backgroundImage: 'linear-gradient(45deg, #10b981 25%, #84cc16 25%, #84cc16 50%, #10b981 50%, #10b981 75%, #84cc16 75%, #84cc16 100%)',
                       backgroundSize: '28px 28px',
                       animation: 'limeStripes 0.8s linear infinite',
-                      transition: 'width 0.2s ease-out'
+                      transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                     }} />
                     <span style={{
                       position: 'absolute',
@@ -450,7 +493,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Status Message and Spinner */}
+                {/* Rotating Loader Spinner and Status */}
                 <div style={{
                   textAlign: 'center',
                   display: 'flex',
@@ -459,13 +502,13 @@ export default function App() {
                   gap: '10px',
                   padding: '24px 0'
                 }}>
-                  <Loader2 size={36} color="#38bdf8" className="animate-spin" />
+                  <Loader2 size={38} color="#38bdf8" className="custom-spinner" />
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#f8fafc', margin: '0 0 4px 0' }}>
-                      {uploadProgress === 100 ? "Finalizing Encryption & Token..." : "You're almost done!"}
+                      {uploadProgress >= 95 ? "Finalizing Encryption & Token..." : "You're almost done!"}
                     </h3>
                     <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-                      {uploadProgress === 100 ? "Writing metadata to secure database..." : "Uploading your files to encrypted memory..."}
+                      {uploadProgress >= 95 ? "Writing metadata to secure database..." : "Uploading your files to encrypted memory..."}
                     </p>
                   </div>
                 </div>
@@ -603,7 +646,7 @@ export default function App() {
                           opacity: emailSending ? 0.7 : 1
                         }}
                       >
-                        {emailSending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                        {emailSending ? <RefreshCw size={14} className="custom-spinner" /> : <Send size={14} />}
                         <span>{emailSending ? 'Sending...' : 'Send'}</span>
                       </button>
                     </div>
