@@ -197,17 +197,17 @@ export default function App() {
         }
       `}</style>
 
-      {/* Prominent Technical Grid Background Lines */}
+      {/* Medium Technical Grid Canvas */}
       <div style={{
         position: 'absolute',
         inset: 0,
         backgroundImage: `
-          linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px)
+          linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px)
         `,
-        backgroundSize: '40px 40px',
-        maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, #000 70%, transparent 100%)',
-        WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, #000 70%, transparent 100%)',
+        backgroundSize: '72px 72px',
+        maskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, #000 60%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, #000 60%, transparent 100%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
